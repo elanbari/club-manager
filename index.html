@@ -1,0 +1,1505 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>Club Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<style>
+:root {
+  --bg:#f0f4f8; --surface:#fff; --surface2:#f5f7fa;
+  --border:#e2e8f0; --border2:#cbd5e1;
+  --navy:#1a2744; --navy2:#243060;
+  --accent:#f59e0b;
+  --green:#10b981; --green-bg:#d1fae5; --green-txt:#065f46;
+  --red:#ef4444; --red-bg:#fee2e2; --red-txt:#991b1b;
+  --yellow:#f59e0b; --yellow-bg:#fef3c7; --yellow-txt:#92400e;
+  --blue:#3b82f6; --blue-bg:#dbeafe; --blue-txt:#1d4ed8;
+  --orange:#f97316; --orange-bg:#ffedd5; --orange-txt:#9a3412;
+  --gray:#6b7280; --gray-bg:#f3f4f6; --gray-txt:#374151;
+  --text1:#0f172a; --text2:#334155; --text3:#64748b; --text4:#94a3b8;
+  --radius:12px; --radius-lg:16px;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.07);
+  --font:'Cairo',sans-serif; --mono:'DM Mono',monospace;
+  --bottom-nav-h:64px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:14px;-webkit-text-size-adjust:100%}
+body{font-family:var(--font);background:var(--bg);color:var(--text1);overflow-x:hidden;padding-bottom:calc(var(--bottom-nav-h) + 8px)}
+button,input,select,textarea{font-family:var(--font)}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+
+/* ── LOADING ── */
+#loadScreen{position:fixed;inset:0;background:var(--navy);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .4s}
+#loadScreen.hide{opacity:0;pointer-events:none}
+.load-ico{width:72px;height:72px;background:linear-gradient(135deg,var(--accent),#f97316);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:32px;color:#fff;margin-bottom:20px;animation:pulse 1.4s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.load-title{color:#fff;font-size:22px;font-weight:800;margin-bottom:6px}
+.load-sub{color:rgba(255,255,255,.4);font-size:13px}
+.load-bar{width:180px;height:3px;background:rgba(255,255,255,.15);border-radius:3px;margin-top:24px;overflow:hidden}
+.load-fill{height:100%;background:var(--accent);border-radius:3px;animation:loadFill 1.3s ease forwards}
+@keyframes loadFill{from{width:0}to{width:100%}}
+
+/* ── TOP BAR ── */
+.topbar{position:fixed;top:0;left:0;right:0;height:56px;background:var(--navy);display:flex;align-items:center;padding:0 14px;gap:10px;z-index:200;box-shadow:0 2px 12px rgba(0,0,0,.3)}
+.topbar-logo{width:34px;height:34px;background:linear-gradient(135deg,var(--accent),#f97316);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;flex-shrink:0}
+.topbar-info{flex:1;min-width:0}
+.topbar-name{font-size:14px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar-date{font-size:10px;color:rgba(255,255,255,.4)}
+.topbar-actions{display:flex;gap:6px;align-items:center}
+.tb-btn{width:34px;height:34px;border-radius:9px;border:none;background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .15s}
+.tb-btn:active{background:rgba(255,255,255,.22)}
+.lang-btn{padding:5px 10px;border-radius:7px;border:1.5px solid rgba(255,255,255,.2);background:transparent;color:rgba(255,255,255,.75);font-size:11px;font-weight:800;cursor:pointer;font-family:var(--font)}
+.lang-btn:active{background:rgba(255,255,255,.15)}
+
+/* ── MAIN ── */
+.main{padding:68px 12px 12px}
+.page{display:none}
+.page.active{display:block;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;height:var(--bottom-nav-h);background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:center;z-index:200;box-shadow:0 -2px 12px rgba(0,0,0,.07)}
+.bn-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px 2px;border:none;background:transparent;color:var(--text4);font-size:9px;font-weight:700;font-family:var(--font);cursor:pointer;position:relative}
+.bn-item i{font-size:19px;transition:all .15s;display:block}
+.bn-item.active{color:var(--navy)}
+.bn-item.active i{color:var(--accent);transform:scale(1.12)}
+.bn-badge{position:absolute;top:4px;right:calc(50% - 16px);background:var(--red);color:#fff;font-size:9px;font-weight:800;min-width:16px;height:16px;border-radius:8px;display:none;align-items:center;justify-content:center;padding:0 3px;font-family:var(--mono)}
+.bn-badge.show{display:flex}
+
+/* ── CARDS ── */
+.card{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden;margin-bottom:12px}
+.card-hdr{padding:13px 15px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+.card-hdr h2{font-size:13.5px;font-weight:700;flex:1}
+.card-hdr-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.card-pad{padding:13px 15px}
+
+/* ── STATS GRID ── */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.stat-card{background:var(--surface);border-radius:var(--radius-lg);padding:13px 14px;box-shadow:var(--shadow);display:flex;align-items:center;gap:11px}
+.stat-ico{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.stat-val{font-size:20px;font-weight:900;line-height:1;font-family:var(--mono)}
+.stat-lbl{font-size:10px;color:var(--text3);margin-top:3px;font-weight:600}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:10.5px;font-weight:700;white-space:nowrap}
+.badge-green{background:var(--green-bg);color:var(--green-txt)}
+.badge-red{background:var(--red-bg);color:var(--red-txt)}
+.badge-yellow{background:var(--yellow-bg);color:var(--yellow-txt)}
+.badge-blue{background:var(--blue-bg);color:var(--blue-txt)}
+.badge-orange{background:var(--orange-bg);color:var(--orange-txt)}
+.badge-gray{background:var(--gray-bg);color:var(--gray-txt)}
+/* Category badges */
+.cat-sgr{background:#fce7f3;color:#9d174d}
+.cat-shb{background:#ede9fe;color:#5b21b6}
+.cat-kbr{background:#dbeafe;color:#1d4ed8}
+
+/* ── BUTTONS ── */
+.btn{padding:9px 16px;border-radius:10px;border:none;font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:6px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn-primary{background:var(--navy);color:#fff}.btn-primary:active{background:var(--navy2);transform:scale(.97)}
+.btn-success{background:var(--green);color:#fff}.btn-success:active{background:#059669;transform:scale(.97)}
+.btn-danger{background:var(--red);color:#fff}.btn-danger:active{background:#dc2626;transform:scale(.97)}
+.btn-warning{background:var(--yellow);color:#fff}.btn-warning:active{background:#d97706;transform:scale(.97)}
+.btn-outline{background:var(--surface);color:var(--text2);border:1.5px solid var(--border2)}.btn-outline:active{background:var(--surface2)}
+.btn-sm{padding:7px 13px;font-size:12px;border-radius:8px}
+.btn-xs{padding:5px 10px;font-size:11px;border-radius:7px}
+
+/* ── ROW ACTIONS ── */
+.act{width:30px;height:30px;border-radius:8px;border:none;display:inline-flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;transition:all .12s}
+.act-edit{background:var(--blue-bg);color:var(--blue-txt)}.act-edit:active{background:var(--blue);color:#fff}
+.act-del{background:var(--red-bg);color:var(--red-txt)}.act-del:active{background:var(--red);color:#fff}
+.act-pay{background:var(--yellow-bg);color:var(--yellow-txt)}.act-pay:active{background:var(--yellow);color:#fff}
+
+/* ── FILTERS ── */
+.filters{padding:10px 12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--border);background:var(--surface2)}
+.fi{padding:8px 11px;border:1.5px solid var(--border);border-radius:9px;font-size:12.5px;outline:none;background:var(--surface);color:var(--text1);transition:border .15s;font-family:var(--font);flex:1;min-width:100px}
+.fi:focus{border-color:var(--blue)}
+select.fi{cursor:pointer}
+.search-wrap{position:relative;flex:1;min-width:140px}
+.search-wrap i{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text4);font-size:11px;pointer-events:none}
+.search-wrap .fi{padding-left:32px;width:100%}
+
+/* ── OVERLAY / MODAL ── */
+.overlay{position:fixed;inset:0;background:rgba(10,20,40,.55);backdrop-filter:blur(4px);z-index:1000;display:none;align-items:flex-end;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:22px 22px 0 0;width:100%;max-width:560px;max-height:92vh;overflow-y:auto;box-shadow:0 -8px 40px rgba(0,0,0,.22);animation:slideUp .25s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+/* Drag handle */
+.modal::before{content:'';display:block;width:40px;height:4px;border-radius:2px;background:var(--border2);margin:10px auto 0}
+.modal-hdr{padding:12px 18px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:10}
+.modal-hdr h3{font-size:15px;font-weight:800;color:var(--text1);flex:1}
+.modal-close{width:30px;height:30px;border-radius:8px;border:none;background:var(--surface2);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:13px}
+.modal-body{padding:16px 18px 4px}
+.modal-ftr{padding:12px 18px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;position:sticky;bottom:0;background:var(--surface)}
+
+/* ── FORM ── */
+.field{margin-bottom:13px}
+.field label{display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:5px}
+.field label .req{color:var(--red)}
+.fc{width:100%;padding:10px 13px;border:1.5px solid var(--border2);border-radius:10px;font-size:13.5px;outline:none;background:var(--surface2);color:var(--text1);transition:all .15s;font-family:var(--font)}
+.fc:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field-err{font-size:11px;color:var(--red);margin-top:3px;display:none}
+.field-err.show{display:block}
+
+/* ── CATEGORY SELECTOR ── */
+.cat-selector{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.cat-chip{padding:10px 6px;border-radius:10px;text-align:center;border:2px solid var(--border);background:var(--surface2);cursor:pointer;transition:all .15s;font-size:12px;font-weight:700;color:var(--text3)}
+.cat-chip:active{transform:scale(.97)}
+.cat-chip i{display:block;font-size:18px;margin-bottom:4px;color:var(--text4)}
+.cat-chip.selected-sgr{border-color:#ec4899;background:#fce7f3;color:#9d174d}
+.cat-chip.selected-sgr i{color:#ec4899}
+.cat-chip.selected-shb{border-color:#8b5cf6;background:#ede9fe;color:#5b21b6}
+.cat-chip.selected-shb i{color:#8b5cf6}
+.cat-chip.selected-kbr{border-color:var(--blue);background:var(--blue-bg);color:var(--blue-txt)}
+.cat-chip.selected-kbr i{color:var(--blue)}
+
+/* ── TOAST ── */
+#toastZone{position:fixed;bottom:calc(var(--bottom-nav-h) + 10px);left:12px;right:12px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{background:var(--text1);color:#fff;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.22);animation:toastIn .3s ease;border-left:4px solid var(--green)}
+.toast.error{border-left-color:var(--red)}.toast.warn{border-left-color:var(--yellow)}.toast.info{border-left-color:var(--blue)}
+@keyframes toastIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── CONFIRM BOTTOM SHEET ── */
+.confirm-sheet{background:var(--surface);border-radius:22px 22px 0 0;width:100%;max-width:440px;padding:6px 20px 28px;animation:slideUp .22s ease}
+.confirm-sheet::before{content:'';display:block;width:40px;height:4px;border-radius:2px;background:var(--border2);margin:10px auto 14px}
+.confirm-ico{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:14px}
+.confirm-title{font-size:17px;font-weight:800;margin-bottom:6px}
+.confirm-msg{font-size:13px;color:var(--text3);line-height:1.6}
+.confirm-actions{display:flex;gap:8px;margin-top:20px}
+.confirm-actions .btn{flex:1;justify-content:center}
+
+/* ── EMPTY ── */
+.empty-state{padding:40px 20px;text-align:center}
+.empty-state i{font-size:34px;color:var(--text4);margin-bottom:12px;display:block}
+.empty-state h3{font-size:14px;font-weight:700;color:var(--text2)}
+.empty-state p{font-size:12px;color:var(--text4);margin-top:4px}
+
+/* ── PAGE HEADER ── */
+.page-hdr{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.page-hdr h1{font-size:18px;font-weight:900}
+.page-hdr p{font-size:11px;color:var(--text3);margin-top:2px}
+.page-hdr-actions{display:flex;gap:6px;align-items:center}
+
+/* ── DASHBOARD ITEMS ── */
+.alert-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--surface2);cursor:pointer}
+.alert-item:last-child{border-bottom:none}
+.alert-item:active{background:var(--surface2)}
+.ai-info{flex:1;min-width:0}
+.ai-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ai-meta{font-size:11px;color:var(--text3);margin-top:1px}
+.ai-amount{font-family:var(--mono);font-weight:800;font-size:13px;color:var(--red);flex-shrink:0}
+
+/* ── PAY ITEM (dashboard & payments) ── */
+.pay-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--surface2)}
+.pay-row:last-child{border-bottom:none}
+.pay-ico{width:36px;height:36px;border-radius:10px;background:var(--green-bg);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--green);flex-shrink:0}
+.pay-info{flex:1;min-width:0}
+.pay-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pay-meta{font-size:11px;color:var(--text3);margin-top:1px}
+.pay-amount{font-family:var(--mono);font-weight:800;font-size:13px;color:var(--green);flex-shrink:0}
+.pay-del{width:28px;height:28px;border-radius:7px;border:none;background:var(--red-bg);color:var(--red-txt);display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;flex-shrink:0}
+
+/* ── MEMBER CARD ── */
+.member-card{display:flex;align-items:center;gap:11px;padding:12px 14px;border-bottom:1px solid var(--surface2)}
+.member-card:last-child{border-bottom:none}
+.member-card:active{background:var(--surface2)}
+.mc-info{flex:1;min-width:0}
+.mc-name{font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mc-meta{font-size:11px;color:var(--text3);margin-top:2px;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.mc-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.mc-debt{font-family:var(--mono);font-size:12px;font-weight:800}
+.mc-actions{display:flex;flex-direction:column;gap:4px;margin-left:6px}
+
+/* ── MONTH CHIPS ── */
+.months-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;padding:12px;background:var(--surface2);border-radius:12px;border:1.5px solid var(--border)}
+.month-chip{padding:9px 4px;border-radius:10px;text-align:center;border:2px solid var(--red);background:var(--red-bg);cursor:pointer;transition:all .15s;user-select:none}
+.month-chip .mc-mo{font-size:11px;font-weight:800;color:var(--red-txt)}
+.month-chip .mc-yr{font-size:9.5px;opacity:.7;color:var(--red-txt)}
+.month-chip.selected{background:var(--green-bg);border-color:var(--green)}
+.month-chip.selected .mc-mo{color:var(--green-txt)}
+.month-chip.selected .mc-yr{color:var(--green-txt)}
+.months-ctrl{display:flex;gap:6px;margin-bottom:8px}
+.months-ctrl .btn{flex:1;justify-content:center}
+
+/* ── STAT BAR ── */
+.sbar-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.sbar-lbl{width:72px;font-size:11.5px;font-weight:700;color:var(--text2);flex-shrink:0}
+.sbar-track{flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden}
+.sbar-fill{height:100%;border-radius:4px;transition:width .5s}
+.sbar-val{width:28px;text-align:right;font-size:11px;font-weight:700;font-family:var(--mono)}
+
+/* ── RETARD CARD ── */
+.retard-card{padding:12px 14px;border-bottom:1px solid var(--surface2);cursor:pointer}
+.retard-card:last-child{border-bottom:none}
+.retard-card:active{background:var(--surface2)}
+.rc-top{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+.rc-info{flex:1;min-width:0}
+.rc-name{font-size:14px;font-weight:800}
+.rc-meta{font-size:11px;color:var(--text3);margin-top:1px}
+.rc-debt{font-family:var(--mono);font-weight:900;font-size:16px;color:var(--red);flex-shrink:0}
+.rc-chips{display:flex;flex-wrap:wrap;gap:4px}
+.rc-mo{font-size:10px;padding:2px 7px;border-radius:6px;background:var(--red-bg);color:var(--red-txt);font-weight:700}
+
+/* ── IMPORT ZONE ── */
+.import-zone{border:2px dashed var(--border2);border-radius:12px;padding:26px;text-align:center;background:var(--surface2)}
+
+/* ── RESPONSIVE ── */
+@media(max-width:360px){.form-row{grid-template-columns:1fr}.stats-grid{grid-template-columns:1fr}}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* ── RTL ── */
+body.rtl{direction:rtl;text-align:right}
+body.rtl .search-wrap i{left:auto;right:11px}
+body.rtl .search-wrap .fi{padding-left:11px;padding-right:32px}
+body.rtl .modal-ftr{flex-direction:row-reverse}
+body.rtl .mc-right{align-items:flex-start}
+body.rtl .mc-actions{margin-left:0;margin-right:6px}
+body.rtl .topbar-actions{flex-direction:row-reverse}
+</style>
+</head>
+<body>
+
+<!-- ══ LOADING ══ -->
+<div id="loadScreen">
+  <div class="load-ico"><i class="fas fa-shield-halved"></i></div>
+  <div class="load-title">Club Manager</div>
+  <div class="load-sub" id="loadSub">Initialisation…</div>
+  <div class="load-bar"><div class="load-fill"></div></div>
+</div>
+
+<!-- ══ TOPBAR ══ -->
+<header class="topbar">
+  <div class="topbar-logo"><i class="fas fa-shield-halved"></i></div>
+  <div class="topbar-info">
+    <div class="topbar-name" id="topbarTitle">Tableau de bord</div>
+    <div class="topbar-date" id="topbarDate"></div>
+  </div>
+  <div class="topbar-actions">
+    <button class="lang-btn" id="btnLang" onclick="toggleLang()">عربي</button>
+    <button class="tb-btn" title="Export .db" onclick="doExport()"><i class="fas fa-download"></i></button>
+    <button class="tb-btn" title="Import .db" onclick="openOv('ovImport')"><i class="fas fa-upload"></i></button>
+  </div>
+</header>
+
+<main class="main">
+
+<!-- ══ DASHBOARD ══ -->
+<section class="page active" id="page-dashboard">
+  <div class="page-hdr">
+    <div><h1 id="txt-dashboard">Tableau de bord</h1><p id="dashDate"></p></div>
+    <button class="btn btn-primary btn-sm" onclick="openAddMember()">
+      <i class="fas fa-user-plus"></i><span id="txt-ajouter">Ajouter</span>
+    </button>
+  </div>
+  <div class="stats-grid" id="dashKpis"></div>
+  <div class="card">
+    <div class="card-hdr">
+      <div class="card-hdr-icon" style="background:var(--red-bg);color:var(--red)"><i class="fas fa-clock"></i></div>
+      <h2 id="txt-impayes">Impayés ce mois</h2>
+      <span class="badge badge-red" id="dashUnpaidBadge">0</span>
+    </div>
+    <div id="dashUnpaidList"></div>
+  </div>
+  <div class="card">
+    <div class="card-hdr">
+      <div class="card-hdr-icon" style="background:var(--blue-bg);color:var(--blue)"><i class="fas fa-users"></i></div>
+      <h2 id="txt-adherents-actifs">Adhérents actifs</h2>
+      <span class="badge badge-blue" id="dashActiveBadge">0</span>
+    </div>
+    <div class="card-pad" id="dashByCat"></div>
+  </div>
+  <div class="card">
+    <div class="card-hdr">
+      <div class="card-hdr-icon" style="background:var(--green-bg);color:var(--green)"><i class="fas fa-receipt"></i></div>
+      <h2 id="txt-derniers-pay">Derniers paiements</h2>
+    </div>
+    <div id="dashRecentPay"></div>
+  </div>
+</section>
+
+<!-- ══ ADHÉRENTS ══ -->
+<section class="page" id="page-members">
+  <div class="page-hdr">
+    <div><h1 id="txt-membres">Adhérents <span id="memberCountLbl" style="font-size:13px;font-weight:500;color:var(--text3)"></span></h1></div>
+    <button class="btn btn-primary btn-sm" onclick="openAddMember()">
+      <i class="fas fa-plus"></i><span id="txt-ajouter2">Ajouter</span>
+    </button>
+  </div>
+  <div class="card">
+    <div class="filters">
+      <div class="search-wrap">
+        <i class="fas fa-search"></i>
+        <input class="fi" id="memberSearch" placeholder="Nom, prénom, tél…" oninput="renderMembers()" autocomplete="off"/>
+      </div>
+      <select class="fi" id="memberFilterCat" onchange="renderMembers()" style="flex:0 0 110px">
+        <option value="">Catégorie</option>
+        <option value="Sgr" id="opt-sgr-m">Sgr</option>
+        <option value="Shb" id="opt-shb-m">Shb</option>
+        <option value="Kbr" id="opt-kbr-m">Kbr</option>
+      </select>
+      <select class="fi" id="memberFilterPay" onchange="renderMembers()" style="flex:0 0 110px">
+        <option value="" id="opt-tous-stat">Tous</option>
+        <option value="ok" id="opt-a-jour">À jour</option>
+        <option value="late" id="opt-retard">Retard</option>
+      </select>
+    </div>
+    <div id="memberList"></div>
+  </div>
+</section>
+
+<!-- ══ PAIEMENTS ══ -->
+<section class="page" id="page-payments">
+  <div class="page-hdr">
+    <div><h1 id="txt-paiements">Paiements <span id="payCountLbl" style="font-size:13px;font-weight:500;color:var(--text3)"></span></h1></div>
+    <button class="btn btn-success btn-sm" onclick="openAddPayment()">
+      <i class="fas fa-plus"></i><span id="txt-encaisser">Encaisser</span>
+    </button>
+  </div>
+  <div class="stats-grid" id="payKpis"></div>
+  <div class="card">
+    <div class="filters">
+      <div class="search-wrap">
+        <i class="fas fa-search"></i>
+        <input class="fi" id="paySearch" placeholder="Rechercher…" oninput="renderPayments()" autocomplete="off"/>
+      </div>
+      <select class="fi" id="payFilterMois" onchange="renderPayments()" style="flex:0 0 120px">
+        <option value="">Tous</option>
+      </select>
+    </div>
+    <div id="payList"></div>
+  </div>
+</section>
+
+<!-- ══ RETARDS ══ -->
+<section class="page" id="page-retards">
+  <div class="page-hdr">
+    <div><h1 id="txt-retards">Retards</h1><p id="txt-retards-sub">Membres avec impayés</p></div>
+  </div>
+  <div class="stats-grid" id="retardKpis"></div>
+  <div class="card">
+    <div class="card-hdr">
+      <div class="card-hdr-icon" style="background:var(--red-bg);color:var(--red)"><i class="fas fa-exclamation-triangle"></i></div>
+      <h2 id="txt-detail-impayes">Détail des impayés</h2>
+    </div>
+    <div id="retardList"></div>
+  </div>
+</section>
+
+</main>
+
+<!-- ══ BOTTOM NAV ══ -->
+<nav class="bottom-nav">
+  <button class="bn-item active" data-page="dashboard" onclick="navigate('dashboard')">
+    <i class="fas fa-chart-pie"></i><span id="nt-dashboard">Tableau</span>
+  </button>
+  <button class="bn-item" data-page="members" onclick="navigate('members')">
+    <i class="fas fa-users"></i><span id="nt-members">Adhérents</span>
+    <span class="bn-badge" id="nb-members"></span>
+  </button>
+  <button class="bn-item" data-page="payments" onclick="navigate('payments')">
+    <i class="fas fa-credit-card"></i><span id="nt-payments">Paiements</span>
+  </button>
+  <button class="bn-item" data-page="retards" onclick="navigate('retards')">
+    <i class="fas fa-exclamation-circle"></i><span id="nt-retards">Retards</span>
+    <span class="bn-badge" id="nb-retards"></span>
+  </button>
+</nav>
+
+<!-- ══ TOAST ══ -->
+<div id="toastZone"></div>
+
+<!-- ══ CONFIRM ══ -->
+<div class="overlay" id="ovConfirm">
+  <div class="confirm-sheet">
+    <div class="confirm-ico" id="confirmIco"></div>
+    <div class="confirm-title" id="confirmTitle"></div>
+    <div class="confirm-msg" id="confirmMsg"></div>
+    <div class="confirm-actions">
+      <button class="btn btn-outline" id="btnConfirmCancel">Annuler</button>
+      <button class="btn btn-danger" id="btnConfirmOk">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MEMBER MODAL ══ -->
+<div class="overlay" id="ovMember">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div style="width:30px;height:30px;border-radius:8px;background:var(--blue-bg);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0"><i class="fas fa-user-plus"></i></div>
+      <h3 id="memberModalTitle">Ajouter un adhérent</h3>
+      <button class="modal-close" onclick="closeOv('ovMember')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="mId"/>
+      <div class="form-row">
+        <div class="field">
+          <label id="lbl-nom">Nom <span class="req">*</span></label>
+          <input class="fc" id="mNom" autocomplete="off"/>
+          <div class="field-err" id="errMNom">Obligatoire</div>
+        </div>
+        <div class="field">
+          <label id="lbl-prenom">Prénom <span class="req">*</span></label>
+          <input class="fc" id="mPrenom" autocomplete="off"/>
+          <div class="field-err" id="errMPrenom">Obligatoire</div>
+        </div>
+      </div>
+      <div class="field">
+        <label id="lbl-tel">Téléphone</label>
+        <input class="fc" id="mTel" type="tel" autocomplete="off"/>
+      </div>
+
+      <!-- CATÉGORIES FIXES : صغار / شباب / كبار -->
+      <div class="field">
+        <label id="lbl-cat">Catégorie</label>
+        <div class="cat-selector" id="catSelector">
+          <div class="cat-chip" data-cat="Sgr" onclick="selectCat(this)">
+            <i class="fas fa-child"></i>
+            <span id="cat-sgr-lbl">Sgr</span>
+          </div>
+          <div class="cat-chip" data-cat="Shb" onclick="selectCat(this)">
+            <i class="fas fa-running"></i>
+            <span id="cat-shb-lbl">Shb</span>
+          </div>
+          <div class="cat-chip" data-cat="Kbr" onclick="selectCat(this)">
+            <i class="fas fa-user-tie"></i>
+            <span id="cat-kbr-lbl">Kbr</span>
+          </div>
+        </div>
+        <input type="hidden" id="mCat"/>
+      </div>
+
+      <div class="form-row">
+        <div class="field">
+          <label id="lbl-sub">Abonnement</label>
+          <select class="fc" id="mSubType">
+            <option value="monthly" id="opt-mensuel">Mensuel</option>
+            <option value="yearly" id="opt-annuel">Annuel</option>
+          </select>
+        </div>
+        <div class="field">
+          <label id="lbl-cot">Cotisation (DH) <span class="req">*</span></label>
+          <input type="number" class="fc" id="mCotisation" placeholder="300" min="0"/>
+          <div class="field-err" id="errMCot">Obligatoire</div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label id="lbl-date-insc">Date inscription <span class="req">*</span></label>
+          <input type="date" class="fc" id="mDateInscription"/>
+          <div class="field-err" id="errMDate">Obligatoire</div>
+        </div>
+        <div class="field">
+          <label id="lbl-statut">Statut</label>
+          <select class="fc" id="mStatut">
+            <option value="Actif" id="opt-actif">Actif</option>
+            <option value="Inactif" id="opt-inactif">Inactif</option>
+            <option value="Suspendu" id="opt-suspendu">Suspendu</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label id="lbl-notes">Notes</label>
+        <textarea class="fc" id="mNotes" rows="2" style="resize:vertical"></textarea>
+      </div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn btn-outline" onclick="closeOv('ovMember')" id="btn-annuler">Annuler</button>
+      <button class="btn btn-primary" onclick="saveMember()" id="btn-enregistrer">
+        <i class="fas fa-save"></i><span id="txt-enregistrer">Enregistrer</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PAYMENT MODAL ══ -->
+<div class="overlay" id="ovPayment">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div style="width:30px;height:30px;border-radius:8px;background:var(--green-bg);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0"><i class="fas fa-money-bill-wave"></i></div>
+      <h3 id="txt-enregistrer-pay">Enregistrer un paiement</h3>
+      <button class="modal-close" onclick="closeOv('ovPayment')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label id="lbl-adherent">Adhérent <span class="req">*</span></label>
+        <select class="fc" id="payMember" onchange="onPayMemberChange()"></select>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label id="lbl-montant">Montant / mois (DH) <span class="req">*</span></label>
+          <input type="number" class="fc" id="payMontant" placeholder="0" min="0" oninput="updatePaySummary()"/>
+        </div>
+        <div class="field">
+          <label id="lbl-methode">Méthode</label>
+          <select class="fc" id="payMethode">
+            <option id="opt-especes">Espèces</option>
+            <option id="opt-virement">Virement</option>
+            <option id="opt-cheque">Chèque</option>
+            <option id="opt-cb">CB</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label id="lbl-date-pay">Date paiement</label>
+        <input type="date" class="fc" id="payDate"/>
+      </div>
+      <div class="field">
+        <label id="lbl-mois-impayes">Mois impayés — sélectionner à régler</label>
+        <div class="months-ctrl">
+          <button type="button" class="btn btn-outline btn-xs" onclick="selectAllMonths()">
+            <i class="fas fa-check-double"></i><span id="txt-tout">Tout</span>
+          </button>
+          <button type="button" class="btn btn-outline btn-xs" onclick="deselectAllMonths()">
+            <i class="fas fa-times"></i><span id="txt-aucun">Aucun</span>
+          </button>
+        </div>
+        <div class="months-grid" id="payMonthsGrid">
+          <p style="color:var(--text4);font-size:12px;grid-column:1/-1;padding:6px" id="payMonthsPlaceholder">Choisissez un adhérent…</p>
+        </div>
+        <div id="payMonthsSummary" style="margin-top:8px;font-size:12px;color:var(--text3);min-height:18px;font-weight:600"></div>
+      </div>
+      <div id="payWarning" style="display:none;padding:10px 14px;border-radius:8px;font-size:12px;background:var(--red-bg);color:var(--red-txt);margin-bottom:4px"></div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn btn-outline" onclick="closeOv('ovPayment')" id="btn-annuler2">Annuler</button>
+      <button class="btn btn-success" onclick="savePayment()">
+        <i class="fas fa-save"></i><span id="txt-enregistrer2">Enregistrer</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ IMPORT MODAL ══ -->
+<div class="overlay" id="ovImport">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div style="width:30px;height:30px;border-radius:8px;background:var(--blue-bg);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0"><i class="fas fa-file-import"></i></div>
+      <h3 id="txt-importer">Importer .db</h3>
+      <button class="modal-close" onclick="closeOv('ovImport')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="import-zone">
+        <i class="fas fa-cloud-upload-alt" style="font-size:30px;color:var(--text4);display:block;margin-bottom:10px"></i>
+        <p style="color:var(--text3);font-size:13px;margin-bottom:14px" id="txt-glisser">Glissez votre fichier .db ou cliquez</p>
+        <button class="btn btn-primary btn-sm" onclick="$('fileInput').click()">
+          <i class="fas fa-folder-open"></i><span id="txt-parcourir">Parcourir</span>
+        </button>
+        <!-- Reset input each time so same file can be reimported -->
+        <input type="file" id="fileInput" accept=".db,.json" style="display:none" onchange="doImport(this)"/>
+        <p id="importFileName" style="margin-top:10px;font-size:12px;color:var(--green)"></p>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <label class="import-mode-radio" id="lbl-replace" style="display:flex;align-items:center;gap:8px;flex:1;padding:11px;border-radius:10px;border:2px solid var(--blue);background:var(--blue-bg);cursor:pointer;font-size:12.5px;font-weight:700;transition:all .15s">
+          <input type="radio" name="importMode" value="replace" checked style="display:none"/>
+          <i class="fas fa-sync-alt" style="color:var(--blue)"></i>
+          <span id="txt-remplacer">Remplacer tout</span>
+        </label>
+        <label class="import-mode-radio" id="lbl-merge" style="display:flex;align-items:center;gap:8px;flex:1;padding:11px;border-radius:10px;border:2px solid var(--border);cursor:pointer;font-size:12.5px;font-weight:700;transition:all .15s">
+          <input type="radio" name="importMode" value="merge" style="display:none"/>
+          <i class="fas fa-code-merge" style="color:var(--text3)"></i>
+          <span id="txt-fusionner">Fusionner</span>
+        </label>
+      </div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn btn-outline" onclick="closeOv('ovImport')" id="btn-fermer">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SCRIPT
+══════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+/* ─────────────────────────────────────────────
+   CONSTANTS & CONFIG
+───────────────────────────────────────────── */
+const CATS = {
+  Sgr: { fr:'صغار', ar:'صغار', cls:'cat-sgr', icon:'fa-child', badge:'cat-sgr' },
+  Shb: { fr:'شباب', ar:'شباب', cls:'cat-shb', icon:'fa-running', badge:'cat-shb' },
+  Kbr: { fr:'كبار', ar:'كبار', cls:'cat-kbr', icon:'fa-user-tie', badge:'cat-kbr' },
+};
+const MONTHS_FR = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+const MONTHS_AR = ['يناير','فبراير','مارس','أبريل','ماي','يونيو','يوليوز','غشت','شتنبر','أكتوبر','نونبر','دجنبر'];
+const MONTHS_FULL_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+const MONTHS_FULL_AR = ['يناير','فبراير','مارس','أبريل','ماي','يونيو','يوليوز','غشت','شتنبر','أكتوبر','نونبر','دجنبر'];
+
+/* ─────────────────────────────────────────────
+   TRANSLATIONS
+───────────────────────────────────────────── */
+let _lang = 'fr';
+
+const TR = {
+  fr: {
+    'txt-dashboard':'Tableau de bord', 'nt-dashboard':'Tableau',
+    'txt-membres':'Adhérents', 'nt-members':'Adhérents',
+    'txt-paiements':'Paiements', 'nt-payments':'Paiements',
+    'txt-retards':'Retards', 'nt-retards':'Retards',
+    'txt-ajouter':'Ajouter', 'txt-ajouter2':'Ajouter',
+    'txt-encaisser':'Encaisser',
+    'txt-impayes':'Impayés ce mois',
+    'txt-adherents-actifs':'Adhérents actifs',
+    'txt-derniers-pay':'Derniers paiements',
+    'txt-detail-impayes':'Détail des impayés',
+    'txt-retards-sub':'Membres avec impayés',
+    'txt-enregistrer-pay':'Enregistrer un paiement',
+    'txt-importer':'Importer .db',
+    'txt-glisser':'Glissez votre fichier .db ou cliquez',
+    'txt-parcourir':'Parcourir',
+    'txt-remplacer':'Remplacer tout',
+    'txt-fusionner':'Fusionner',
+    'txt-tout':'Tout', 'txt-aucun':'Aucun',
+    'txt-enregistrer':'Enregistrer', 'txt-enregistrer2':'Enregistrer',
+    'lbl-nom':'Nom', 'lbl-prenom':'Prénom', 'lbl-tel':'Téléphone',
+    'lbl-cat':'Catégorie', 'lbl-sub':'Abonnement', 'lbl-cot':'Cotisation (DH)',
+    'lbl-date-insc':'Date inscription', 'lbl-statut':'Statut', 'lbl-notes':'Notes',
+    'lbl-adherent':'Adhérent', 'lbl-montant':'Montant / mois (DH)', 'lbl-methode':'Méthode',
+    'lbl-date-pay':'Date paiement', 'lbl-mois-impayes':'Mois impayés — sélectionner à régler',
+    'btn-annuler':'Annuler', 'btn-annuler2':'Annuler', 'btn-fermer':'Fermer',
+    'opt-mensuel':'Mensuel', 'opt-annuel':'Annuel',
+    'opt-actif':'Actif', 'opt-inactif':'Inactif', 'opt-suspendu':'Suspendu',
+    'opt-especes':'Espèces', 'opt-virement':'Virement', 'opt-cheque':'Chèque', 'opt-cb':'CB',
+    'opt-tous-stat':'Tous', 'opt-a-jour':'À jour', 'opt-retard':'Retard',
+    'opt-sgr-m':'صغار', 'opt-shb-m':'شباب', 'opt-kbr-m':'كبار',
+    'memberModalTitle-new':'Ajouter un adhérent', 'memberModalTitle-edit':'Modifier l\'adhérent',
+    'cat-sgr-lbl':'صغار', 'cat-shb-lbl':'شباب', 'cat-kbr-lbl':'كبار',
+    'kpi-actifs':'Actifs', 'kpi-recettes':'Recettes ce mois', 'kpi-retards':'En retard', 'kpi-dettes':'Dettes nettes',
+    'kpi-membres-ret':'Membres en retard', 'kpi-mois-imp':'Mois impayés', 'kpi-dettes2':'Dettes',
+    'a-jour':'À jour', 'en-retard':'En retard', 'lbl-mois':'mois',
+    'ph-search-m':'Nom, prénom, tél…', 'ph-search-p':'Rechercher…', 'ph-cat-filtre':'Catégorie',
+    'empty-members':'Aucun adhérent', 'empty-payments':'Aucun paiement', 'empty-retards':'Aucun retard !',
+    'confirm-del-m':'Supprimer cet adhérent ?', 'confirm-del-p':'Supprimer ce paiement ?',
+    'msg-del-m':'Tous ses paiements seront supprimés.',
+    'btn-ok':'OK',
+    'toast-member-ok':'Adhérent enregistré !', 'toast-pay-ok':'Paiement enregistré !',
+    'toast-deleted':'Supprimé.', 'toast-imported':'Base de données importée !',
+    'toast-export-ok':'Export .db réussi !',
+    'err-required':'Champs obligatoires manquants',
+    'err-no-month':'Sélectionnez au moins un mois',
+    'err-no-montant':'Montant invalide',
+    'err-dup':'Déjà enregistré',
+    'payMonthsPlaceholder':'Choisissez un adhérent…',
+    'pay-tout-ajour':'Aucun mois impayé — membre à jour ✓',
+    'load-sub':'Initialisation de la base de données…',
+    'btn-lang':'عربي',
+    'export-name':'ClubManager',
+    'total-lbl':'Total', 'nb-pay-lbl':'Nb paiements',
+  },
+  ar: {
+    'txt-dashboard':'لوحة التحكم', 'nt-dashboard':'الرئيسية',
+    'txt-membres':'الأعضاء', 'nt-members':'الأعضاء',
+    'txt-paiements':'المدفوعات', 'nt-payments':'الدفع',
+    'txt-retards':'المتأخرات', 'nt-retards':'المتأخرات',
+    'txt-ajouter':'إضافة', 'txt-ajouter2':'إضافة',
+    'txt-encaisser':'تسجيل دفع',
+    'txt-impayes':'غير مدفوع هذا الشهر',
+    'txt-adherents-actifs':'الأعضاء النشطون',
+    'txt-derniers-pay':'آخر المدفوعات',
+    'txt-detail-impayes':'تفاصيل المتأخرات',
+    'txt-retards-sub':'أعضاء لديهم مبالغ مستحقة',
+    'txt-enregistrer-pay':'تسجيل دفعة',
+    'txt-importer':'استيراد .db',
+    'txt-glisser':'اسحب ملف .db أو انقر هنا',
+    'txt-parcourir':'تصفح',
+    'txt-remplacer':'استبدال الكل',
+    'txt-fusionner':'دمج',
+    'txt-tout':'الكل', 'txt-aucun':'إلغاء الكل',
+    'txt-enregistrer':'حفظ', 'txt-enregistrer2':'حفظ',
+    'lbl-nom':'اللقب', 'lbl-prenom':'الاسم', 'lbl-tel':'الهاتف',
+    'lbl-cat':'الفئة', 'lbl-sub':'الاشتراك', 'lbl-cot':'المبلغ الشهري (DH)',
+    'lbl-date-insc':'تاريخ التسجيل', 'lbl-statut':'الحالة', 'lbl-notes':'ملاحظات',
+    'lbl-adherent':'العضو', 'lbl-montant':'المبلغ / شهر (DH)', 'lbl-methode':'طريقة الدفع',
+    'lbl-date-pay':'تاريخ الدفع', 'lbl-mois-impayes':'الأشهر غير المدفوعة',
+    'btn-annuler':'إلغاء', 'btn-annuler2':'إلغاء', 'btn-fermer':'إغلاق',
+    'opt-mensuel':'شهري', 'opt-annuel':'سنوي',
+    'opt-actif':'نشط', 'opt-inactif':'غير نشط', 'opt-suspendu':'موقوف',
+    'opt-especes':'نقداً', 'opt-virement':'تحويل', 'opt-cheque':'شيك', 'opt-cb':'بطاقة',
+    'opt-tous-stat':'الكل', 'opt-a-jour':'منتظم', 'opt-retard':'متأخر',
+    'opt-sgr-m':'صغار', 'opt-shb-m':'شباب', 'opt-kbr-m':'كبار',
+    'memberModalTitle-new':'إضافة عضو جديد', 'memberModalTitle-edit':'تعديل العضو',
+    'cat-sgr-lbl':'صغار', 'cat-shb-lbl':'شباب', 'cat-kbr-lbl':'كبار',
+    'kpi-actifs':'نشطون', 'kpi-recettes':'إيرادات الشهر', 'kpi-retards':'متأخرون', 'kpi-dettes':'إجمالي الديون',
+    'kpi-membres-ret':'أعضاء متأخرون', 'kpi-mois-imp':'أشهر غير مدفوعة', 'kpi-dettes2':'الديون',
+    'a-jour':'منتظم', 'en-retard':'متأخر', 'lbl-mois':'أشهر',
+    'ph-search-m':'البحث بالاسم أو الهاتف…', 'ph-search-p':'بحث…', 'ph-cat-filtre':'الفئة',
+    'empty-members':'لا يوجد أعضاء', 'empty-payments':'لا توجد مدفوعات', 'empty-retards':'لا توجد متأخرات !',
+    'confirm-del-m':'حذف هذا العضو ؟', 'confirm-del-p':'حذف هذه الدفعة ؟',
+    'msg-del-m':'سيتم حذف جميع مدفوعاته.',
+    'btn-ok':'موافق',
+    'toast-member-ok':'تم حفظ العضو !', 'toast-pay-ok':'تم تسجيل الدفعة !',
+    'toast-deleted':'تم الحذف.', 'toast-imported':'تم استيراد قاعدة البيانات !',
+    'toast-export-ok':'تم تصدير الملف !',
+    'err-required':'الحقول الإلزامية ناقصة',
+    'err-no-month':'اختر شهراً واحداً على الأقل',
+    'err-no-montant':'المبلغ غير صحيح',
+    'err-dup':'مسجل مسبقاً',
+    'payMonthsPlaceholder':'اختر العضو أولاً…',
+    'pay-tout-ajour':'لا توجد أشهر متأخرة — العضو منتظم ✓',
+    'load-sub':'جاري تهيئة قاعدة البيانات…',
+    'btn-lang':'Français',
+    'export-name':'ClubManager',
+    'total-lbl':'المجموع', 'nb-pay-lbl':'عدد الدفعات',
+  }
+};
+
+function T(key) { return TR[_lang]?.[key] ?? TR.fr?.[key] ?? key; }
+function Mo(i) { return (_lang==='ar'?MONTHS_AR:MONTHS_FR)[i]; }
+function MoFull(i) { return (_lang==='ar'?MONTHS_FULL_AR:MONTHS_FULL_FR)[i]; }
+
+function applyTranslations() {
+  // Update all elements with id matching a TR key
+  Object.keys(TR.fr).forEach(k => {
+    const el = document.getElementById(k);
+    if (!el) return;
+    const tag = el.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    if (tag === 'OPTION') { el.textContent = T(k); return; }
+    // Only update leaves (no child elements)
+    if (el.children.length === 0) el.textContent = T(k);
+  });
+  // Placeholders
+  const ms = document.getElementById('memberSearch');
+  if (ms) ms.placeholder = T('ph-search-m');
+  const ps = document.getElementById('paySearch');
+  if (ps) ps.placeholder = T('ph-search-p');
+  // Topbar title
+  const tb = document.getElementById('topbarTitle');
+  if (tb) tb.textContent = T('txt-' + (_currentPage || 'dashboard').replace('txt-',''));
+  // Load sub
+  const ls = document.getElementById('loadSub');
+  if (ls) ls.textContent = T('load-sub');
+  // Lang button
+  const lb = document.getElementById('btnLang');
+  if (lb) lb.textContent = T('btn-lang');
+  // Confirm buttons
+  const bc = document.getElementById('btnConfirmCancel');
+  if (bc) bc.textContent = T('btn-annuler');
+  // Month filter rebuild
+  buildMonthFilter();
+  // RTL
+  document.body.classList.toggle('rtl', _lang === 'ar');
+  document.documentElement.setAttribute('lang', _lang);
+}
+
+function toggleLang() {
+  _lang = _lang === 'fr' ? 'ar' : 'fr';
+  applyTranslations();
+  refreshAll();
+}
+
+/* ─────────────────────────────────────────────
+   INDEXEDDB
+───────────────────────────────────────────── */
+const DB = (() => {
+  const NAME = 'ClubManagerDB', VER = 1;
+  const STORES = ['members', 'payments'];
+  let _db;
+  function open() {
+    return new Promise((res, rej) => {
+      const req = indexedDB.open(NAME, VER);
+      req.onupgradeneeded = e => {
+        const db = e.target.result;
+        STORES.forEach(s => { if (!db.objectStoreNames.contains(s)) db.createObjectStore(s, { keyPath: 'id' }); });
+      };
+      req.onsuccess  = e => { _db = e.target.result; res(); };
+      req.onerror    = e => rej(e.target.error);
+    });
+  }
+  const tx      = (s, m='readonly') => _db.transaction(s, m).objectStore(s);
+  const getAll  = s  => new Promise((res, rej) => { const r = tx(s).getAll(); r.onsuccess = () => res(r.result); r.onerror = e => rej(e.target.error); });
+  const get     = (s, id) => new Promise((res, rej) => { const r = tx(s).get(id); r.onsuccess = () => res(r.result); r.onerror = e => rej(e.target.error); });
+  const put     = (s, item) => {
+    const now = new Date().toISOString();
+    if (!item.createdAt) item.createdAt = now;
+    item.updatedAt = now;
+    return new Promise((res, rej) => { const r = tx(s, 'readwrite').put(item); r.onsuccess = () => res(r.result); r.onerror = e => rej(e.target.error); });
+  };
+  const del     = (s, id) => new Promise((res, rej) => { const r = tx(s, 'readwrite').delete(id); r.onsuccess = () => res(); r.onerror = e => rej(e.target.error); });
+  const clear   = s  => new Promise((res, rej) => { const r = tx(s, 'readwrite').clear(); r.onsuccess = () => res(); r.onerror = e => rej(e.target.error); });
+  const exportAll = async () => { const o = {}; for (const s of STORES) o[s] = await getAll(s); return o; };
+  const importAll = async (data, mode = 'replace') => {
+    for (const store of STORES) {
+      if (!data[store]) continue;
+      if (mode === 'replace') await clear(store);
+      for (const item of data[store]) {
+        if (mode === 'merge') { const ex = await get(store, item.id); if (ex) continue; }
+        await put(store, item);
+      }
+    }
+  };
+  return { open, getAll, get, put, del, clear, exportAll, importAll };
+})();
+
+/* ─────────────────────────────────────────────
+   FINANCIAL ENGINE
+───────────────────────────────────────────── */
+const uid = p => p + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 5).toUpperCase();
+
+function getExpectedPeriods(m, upTo = new Date()) {
+  if (!m.date_inscription) return [];
+  const sd = new Date(m.date_inscription);
+  const sy = sd.getFullYear(), sm = sd.getMonth() + 1;
+  const ey = upTo.getFullYear(), em = upTo.getMonth() + 1;
+  const periods = [];
+  if (m.subscription_type === 'yearly') {
+    for (let y = sy; y <= ey; y++) {
+      if (y === ey && sm > em) break;
+      periods.push({ mois: sm, annee: y });
+    }
+  } else {
+    let y = sy, mo = sm;
+    while (y < ey || (y === ey && mo <= em)) {
+      periods.push({ mois: mo, annee: y });
+      mo++; if (mo > 12) { mo = 1; y++; }
+    }
+  }
+  return periods;
+}
+
+// Debt cache
+let _debtCache = new Map(), _cacheValid = false;
+function invalidateCache() { _cacheValid = false; _debtCache.clear(); }
+
+async function buildCache(actifs) {
+  if (_cacheValid) return;
+  const allPays = await DB.getAll('payments');
+  const byMember = new Map();
+  for (const p of allPays) {
+    if (!byMember.has(p.memberId)) byMember.set(p.memberId, []);
+    byMember.get(p.memberId).push(p);
+  }
+  const now = new Date();
+  for (const m of actifs) {
+    const pays = byMember.get(m.id) || [];
+    const unpaid = getExpectedPeriods(m).filter(p => !pays.some(x => x.mois === p.mois && x.annee === p.annee))
+      .map(p => ({ ...p, status: new Date(p.annee, p.mois - 1, 1) < now ? 'late' : 'pending' }));
+    const lates = unpaid.filter(u => u.status === 'late');
+    _debtCache.set(m.id, { debt: lates.length * (m.cotisation || 0), lates, unpaid });
+  }
+  _cacheValid = true;
+}
+
+async function getUnpaidForMember(m) {
+  const pays = await DB.getAll('payments');
+  const memberPays = pays.filter(p => p.memberId === m.id);
+  const now = new Date();
+  return getExpectedPeriods(m).filter(p => !memberPays.some(x => x.mois === p.mois && x.annee === p.annee))
+    .map(p => ({ ...p, status: new Date(p.annee, p.mois - 1, 1) < now ? 'late' : 'pending' }));
+}
+
+/* ─────────────────────────────────────────────
+   UI HELPERS
+───────────────────────────────────────────── */
+const $ = id => document.getElementById(id);
+
+function toast(msg, type = 'success') {
+  const icons = { success: 'fa-check-circle', error: 'fa-times-circle', warn: 'fa-exclamation-triangle', info: 'fa-info-circle' };
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<i class="fas ${icons[type] || icons.success}" style="flex-shrink:0;font-size:15px"></i><span>${msg}</span>`;
+  $('toastZone').appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateY(10px)'; el.style.transition = 'all .3s'; setTimeout(() => el.remove(), 300); }, 3000);
+}
+
+let _confirmFn = null;
+function confirm2(title, msg, type, onOk) {
+  const palettes = {
+    danger: { bg: 'var(--red-bg)', icon: 'fa-exclamation-triangle', c: 'var(--red)', btnCls: 'btn-danger' },
+    warn:   { bg: 'var(--yellow-bg)', icon: 'fa-exclamation-circle', c: 'var(--yellow)', btnCls: 'btn-warning' },
+  };
+  const p = palettes[type] || palettes.danger;
+  $('confirmIco').style.background = p.bg;
+  $('confirmIco').innerHTML = `<i class="fas ${p.icon}" style="color:${p.c};font-size:22px"></i>`;
+  $('confirmTitle').textContent = title;
+  $('confirmMsg').textContent = msg || '';
+  $('btnConfirmOk').className = `btn ${p.btnCls}`;
+  $('btnConfirmOk').textContent = T('btn-ok');
+  _confirmFn = onOk;
+  openOv('ovConfirm');
+}
+
+function openOv(id)  { $(id).classList.add('open'); document.body.style.overflow = 'hidden'; }
+function closeOv(id) { $(id).classList.remove('open'); document.body.style.overflow = ''; }
+
+// Close overlay on backdrop tap
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('overlay')) closeOv(e.target.id);
+});
+
+function fmtAmount(n) { return (n || 0).toLocaleString('fr-MA') + ' DH'; }
+function fmtDate(d)   { if (!d) return '—'; try { return new Date(d).toLocaleDateString('fr-FR'); } catch { return d; } }
+function todayStr()   { return new Date().toISOString().split('T')[0]; }
+
+function avatarBg(str) {
+  const c = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#f97316','#06b6d4','#ec4899'];
+  let h = 0; for (let i = 0; i < (str || '').length; i++) h = (h * 31 + str.charCodeAt(i)) % c.length;
+  return c[h];
+}
+function memberAvatar(m, sz = 40) {
+  const initials = ((m.nom || '?').charAt(0) + (m.prenom || '').charAt(0)).toUpperCase();
+  const bg = avatarBg(m.nom);
+  if (m.photo_base64) return `<img src="${m.photo_base64}" style="width:${sz}px;height:${sz}px;border-radius:${Math.round(sz*.25)}px;object-fit:cover;flex-shrink:0"/>`;
+  return `<div style="width:${sz}px;height:${sz}px;border-radius:${Math.round(sz*.25)}px;background:${bg};display:flex;align-items:center;justify-content:center;font-size:${Math.round(sz*.3)}px;font-weight:900;color:#fff;flex-shrink:0">${initials}</div>`;
+}
+
+function catBadge(catKey) {
+  const c = CATS[catKey];
+  if (!c) return '';
+  return `<span class="badge ${c.badge}" style="font-size:10px">${T('cat-' + catKey.toLowerCase() + '-lbl')}</span>`;
+}
+
+/* ─────────────────────────────────────────────
+   NAVIGATION
+───────────────────────────────────────────── */
+let _currentPage = 'dashboard';
+
+async function navigate(page) {
+  if (!$(`page-${page}`)) return;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.bn-item[data-page]').forEach(n => n.classList.remove('active'));
+  $(`page-${page}`).classList.add('active');
+  document.querySelector(`.bn-item[data-page="${page}"]`)?.classList.add('active');
+  _currentPage = page;
+  $('topbarTitle').textContent = T('txt-' + page);
+  await renderPage(page);
+}
+
+async function renderPage(p) {
+  if (p === 'dashboard') await renderDashboard();
+  else if (p === 'members')  await renderMembers();
+  else if (p === 'payments') await renderPayments();
+  else if (p === 'retards')  await renderRetards();
+}
+
+async function refreshAll() {
+  invalidateCache();
+  const actifs = (await DB.getAll('members')).filter(m => m.statut === 'Actif');
+  await buildCache(actifs);
+  await updateNavBadges();
+  await renderPage(_currentPage);
+}
+
+async function updateNavBadges() {
+  const actifs = (await DB.getAll('members')).filter(m => m.statut === 'Actif');
+  await buildCache(actifs);
+  let ret = 0;
+  for (const m of actifs) {
+    const c = _debtCache.get(m.id);
+    if (c && c.lates.length > 0) ret++;
+  }
+  const nbM = $('nb-members'), nbR = $('nb-retards');
+  if (nbM) { nbM.textContent = actifs.length; nbM.classList.toggle('show', actifs.length > 0); }
+  if (nbR) { nbR.textContent = ret; nbR.classList.toggle('show', ret > 0); }
+}
+
+/* ─────────────────────────────────────────────
+   DASHBOARD
+───────────────────────────────────────────── */
+async function renderDashboard() {
+  const now  = new Date();
+  const curM = now.getMonth() + 1, curY = now.getFullYear();
+  $('dashDate').textContent = now.toLocaleDateString(_lang === 'ar' ? 'ar-MA' : 'fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+  const allMembers = await DB.getAll('members');
+  const actifs = allMembers.filter(m => m.statut === 'Actif');
+  await buildCache(actifs);
+  const allPays = await DB.getAll('payments');
+
+  // KPIs
+  const totalMo   = allPays.filter(p => p.mois === curM && p.annee === curY).reduce((s, p) => s + (p.montant || 0), 0);
+  let retCount = 0, totalDebt = 0;
+  for (const m of actifs) {
+    const c = _debtCache.get(m.id) || { debt: 0, lates: [] };
+    if (c.lates.length > 0) { retCount++; totalDebt += c.debt; }
+  }
+  $('dashKpis').innerHTML = `
+    <div class="stat-card"><div class="stat-ico" style="background:var(--blue-bg)"><i class="fas fa-users" style="color:var(--blue)"></i></div><div><div class="stat-val">${actifs.length}</div><div class="stat-lbl">${T('kpi-actifs')}</div></div></div>
+    <div class="stat-card"><div class="stat-ico" style="background:var(--green-bg)"><i class="fas fa-coins" style="color:var(--green)"></i></div><div><div class="stat-val" style="font-size:16px">${(totalMo/1000).toFixed(1)}k</div><div class="stat-lbl">${T('kpi-recettes')}</div></div></div>
+    <div class="stat-card"><div class="stat-ico" style="background:var(--red-bg)"><i class="fas fa-exclamation-circle" style="color:var(--red)"></i></div><div><div class="stat-val">${retCount}</div><div class="stat-lbl">${T('kpi-retards')}</div></div></div>
+    <div class="stat-card"><div class="stat-ico" style="background:var(--orange-bg)"><i class="fas fa-money-bill-wave" style="color:var(--orange)"></i></div><div><div class="stat-val" style="font-size:16px">${(totalDebt/1000).toFixed(1)}k</div><div class="stat-lbl">${T('kpi-dettes')}</div></div></div>`;
+
+  // Impayés ce mois
+  const unpaidThisMo = [];
+  for (const m of actifs) {
+    const sd = new Date(m.date_inscription || '2000-01-01');
+    const inscY = sd.getFullYear(), inscM = sd.getMonth() + 1;
+    const expected = inscY < curY || (inscY === curY && inscM <= curM);
+    if (!expected) continue;
+    const hasPaid = allPays.some(p => p.memberId === m.id && p.mois === curM && p.annee === curY);
+    if (!hasPaid) unpaidThisMo.push(m);
+  }
+  $('dashUnpaidBadge').textContent = unpaidThisMo.length;
+  if (unpaidThisMo.length) {
+    let html = unpaidThisMo.slice(0, 8).map(m => `
+      <div class="alert-item" onclick="openAddPayment('${m.id}')">
+        ${memberAvatar(m, 36)}
+        <div class="ai-info">
+          <div class="ai-name">${m.nom} ${m.prenom}</div>
+          <div class="ai-meta">${m.telephone || '—'} · ${catBadge(m.categorie)}</div>
+        </div>
+        <span class="ai-amount">${fmtAmount(m.cotisation)}</span>
+        <i class="fas fa-chevron-${_lang==='ar'?'left':'right'}" style="color:var(--text4);font-size:10px"></i>
+      </div>`).join('');
+    if (unpaidThisMo.length > 8) html += `<div style="padding:10px 14px;text-align:center;font-size:12px;color:var(--text3)">+${unpaidThisMo.length - 8}</div>`;
+    $('dashUnpaidList').innerHTML = html;
+  } else {
+    $('dashUnpaidList').innerHTML = `<div class="empty-state"><i class="fas fa-check-circle" style="color:var(--green)"></i><h3 style="color:var(--green)">${T('a-jour')}</h3></div>`;
+  }
+
+  // Adhérents actifs par catégorie
+  $('dashActiveBadge').textContent = actifs.length;
+  const catKeys = ['Sgr', 'Shb', 'Kbr'];
+  const maxCat = Math.max(...catKeys.map(k => actifs.filter(m => m.categorie === k).length), 1);
+  const catColors = { Sgr: '#ec4899', Shb: '#8b5cf6', Kbr: 'var(--blue)' };
+  $('dashByCat').innerHTML = catKeys.map(k => {
+    const cnt = actifs.filter(m => m.categorie === k).length;
+    const lbl = T('cat-' + k.toLowerCase() + '-lbl');
+    return `<div class="sbar-row">
+      <span class="sbar-lbl">${lbl}</span>
+      <div class="sbar-track"><div class="sbar-fill" style="width:${Math.round(cnt/maxCat*100)}%;background:${catColors[k]}"></div></div>
+      <span class="sbar-val" style="color:${catColors[k]}">${cnt}</span>
+    </div>`;
+  }).join('') + (() => {
+    const okC  = actifs.filter(m => (_debtCache.get(m.id)||{lates:[]}).lates.length === 0).length;
+    const retC = actifs.length - okC;
+    const maxV = Math.max(okC, retC, 1);
+    return `<div style="border-top:1px solid var(--border);margin-top:6px;padding-top:10px">
+      <div class="sbar-row"><span class="sbar-lbl" style="color:var(--green)">${T('a-jour')}</span><div class="sbar-track"><div class="sbar-fill" style="width:${Math.round(okC/maxV*100)}%;background:var(--green)"></div></div><span class="sbar-val" style="color:var(--green)">${okC}</span></div>
+      <div class="sbar-row"><span class="sbar-lbl" style="color:var(--red)">${T('en-retard')}</span><div class="sbar-track"><div class="sbar-fill" style="width:${Math.round(retC/maxV*100)}%;background:var(--red)"></div></div><span class="sbar-val" style="color:var(--red)">${retC}</span></div>
+    </div>`;
+  })();
+
+  // Derniers paiements
+  const membersMap = {};
+  allMembers.forEach(m => membersMap[m.id] = m);
+  const recent = [...allPays].sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || '')).slice(0, 6);
+  $('dashRecentPay').innerHTML = recent.length ? recent.map(p => {
+    const m = membersMap[p.memberId] || { nom: '?', prenom: '' };
+    return `<div class="pay-row">
+      <div class="pay-ico"><i class="fas fa-check"></i></div>
+      <div class="pay-info">
+        <div class="pay-name">${m.nom} ${m.prenom}</div>
+        <div class="pay-meta">${Mo((p.mois||1)-1)} ${p.annee||''} · ${p.methode||'—'} · ${fmtDate(p.date_paiement)}</div>
+      </div>
+      <span class="pay-amount">${fmtAmount(p.montant)}</span>
+    </div>`;
+  }).join('') : `<div class="empty-state"><i class="fas fa-receipt"></i><p>${T('empty-payments')}</p></div>`;
+}
+
+/* ─────────────────────────────────────────────
+   MEMBERS
+───────────────────────────────────────────── */
+async function renderMembers() {
+  const srch    = ($('memberSearch')?.value || '').toLowerCase();
+  const filterCat = $('memberFilterCat')?.value || '';
+  const filterPay = $('memberFilterPay')?.value || '';
+
+  let members = (await DB.getAll('members')).filter(m => m.statut === 'Actif');
+  if (srch)      members = members.filter(m => `${m.nom} ${m.prenom} ${m.telephone||''}`.toLowerCase().includes(srch));
+  if (filterCat) members = members.filter(m => m.categorie === filterCat);
+
+  const actifs = (await DB.getAll('members')).filter(m => m.statut === 'Actif');
+  await buildCache(actifs);
+
+  if (filterPay === 'ok')   members = members.filter(m => (_debtCache.get(m.id) || { lates: [] }).lates.length === 0);
+  if (filterPay === 'late') members = members.filter(m => (_debtCache.get(m.id) || { lates: [] }).lates.length > 0);
+
+  $('memberCountLbl').textContent = `(${members.length})`;
+
+  if (!members.length) {
+    $('memberList').innerHTML = `<div class="empty-state"><i class="fas fa-users"></i><h3>${T('empty-members')}</h3></div>`;
+    return;
+  }
+
+  $('memberList').innerHTML = members.map(m => {
+    const c = _debtCache.get(m.id) || { debt: 0, lates: [] };
+    const isLate = c.lates.length > 0;
+    const badgeCls = c.lates.length === 0 ? 'badge-green' : c.lates.length === 1 ? 'badge-yellow' : 'badge-red';
+    const badgeTxt = c.lates.length === 0 ? T('a-jour') : `${c.lates.length} ${T('lbl-mois')}`;
+    return `<div class="member-card">
+      ${memberAvatar(m, 42)}
+      <div class="mc-info">
+        <div class="mc-name">${m.nom} ${m.prenom}</div>
+        <div class="mc-meta">
+          ${catBadge(m.categorie)}
+          <span>${m.telephone || '—'}</span>
+        </div>
+      </div>
+      <div class="mc-right">
+        <span class="badge ${badgeCls}">${badgeTxt}</span>
+        <span class="mc-debt" style="color:${isLate ? 'var(--red)' : 'var(--green)'}">${isLate ? fmtAmount(c.debt) : '✓'}</span>
+      </div>
+      <div class="mc-actions">
+        <button class="act act-pay"  onclick="openAddPayment('${m.id}')" title="Paiement"><i class="fas fa-money-bill"></i></button>
+        <button class="act act-edit" onclick="openEditMember('${m.id}')" title="Modifier"><i class="fas fa-pen"></i></button>
+        <button class="act act-del"  onclick="confirmDelMember('${m.id}')" title="Supprimer"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ─────────────────────────────────────────────
+   PAYMENTS PAGE
+───────────────────────────────────────────── */
+function buildMonthFilter() {
+  const sel = $('payFilterMois'); if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = `<option value="">${T('opt-tous-stat') === T('opt-tous-stat') ? (T('opt-tous-stat')) : 'Tous'}</option>`
+    + MONTHS_FULL_FR.map((_, i) => `<option value="${i+1}" ${cur == i+1 ? 'selected' : ''}>${MoFull(i)}</option>`).join('');
+}
+
+async function renderPayments() {
+  const srch = ($('paySearch')?.value || '').toLowerCase();
+  const mois = parseInt($('payFilterMois')?.value) || 0;
+  let pays = await DB.getAll('payments');
+  if (mois) pays = pays.filter(p => p.mois === mois);
+  if (srch) pays = pays.filter(p => (p.memberName || '').toLowerCase().includes(srch));
+  pays.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+  $('payCountLbl').textContent = `(${pays.length})`;
+
+  const total = pays.reduce((s, p) => s + (p.montant || 0), 0);
+  $('payKpis').innerHTML = `
+    <div class="stat-card"><div class="stat-ico" style="background:var(--green-bg)"><i class="fas fa-check-circle" style="color:var(--green)"></i></div><div><div class="stat-val" style="font-size:17px">${fmtAmount(total)}</div><div class="stat-lbl">${T('total-lbl')}</div></div></div>
+    <div class="stat-card"><div class="stat-ico" style="background:var(--blue-bg)"><i class="fas fa-receipt" style="color:var(--blue)"></i></div><div><div class="stat-val">${pays.length}</div><div class="stat-lbl">${T('nb-pay-lbl')}</div></div></div>`;
+
+  if (!pays.length) {
+    $('payList').innerHTML = `<div class="empty-state"><i class="fas fa-receipt"></i><h3>${T('empty-payments')}</h3></div>`;
+    return;
+  }
+  const membersMap = {};
+  (await DB.getAll('members')).forEach(m => membersMap[m.id] = m);
+  $('payList').innerHTML = pays.map(p => {
+    const m = membersMap[p.memberId] || { nom: '?', prenom: '' };
+    return `<div class="pay-row">
+      <div class="pay-ico"><i class="fas fa-check"></i></div>
+      <div class="pay-info">
+        <div class="pay-name">${m.nom} ${m.prenom}</div>
+        <div class="pay-meta">${Mo((p.mois||1)-1)} ${p.annee||''} · ${p.methode||'—'} · ${fmtDate(p.date_paiement)}</div>
+      </div>
+      <span class="pay-amount">${fmtAmount(p.montant)}</span>
+      <button class="pay-del" onclick="confirmDelPayment('${p.id}')"><i class="fas fa-trash"></i></button>
+    </div>`;
+  }).join('');
+}
+
+/* ─────────────────────────────────────────────
+   RETARDS
+───────────────────────────────────────────── */
+async function renderRetards() {
+  const actifs = (await DB.getAll('members')).filter(m => m.statut === 'Actif');
+  await buildCache(actifs);
+  const results = [];
+  for (const m of actifs) {
+    const c = _debtCache.get(m.id) || { debt: 0, lates: [] };
+    if (c.lates.length > 0) results.push({ m, lates: c.lates, debt: c.debt });
+  }
+  results.sort((a, b) => b.debt - a.debt);
+  const tDebt = results.reduce((s, r) => s + r.debt, 0);
+  const tMo   = results.reduce((s, r) => s + r.lates.length, 0);
+
+  $('retardKpis').innerHTML = `
+    <div class="stat-card"><div class="stat-ico" style="background:var(--red-bg)"><i class="fas fa-users" style="color:var(--red)"></i></div><div><div class="stat-val">${results.length}</div><div class="stat-lbl">${T('kpi-membres-ret')}</div></div></div>
+    <div class="stat-card"><div class="stat-ico" style="background:var(--yellow-bg)"><i class="fas fa-calendar-times" style="color:var(--yellow)"></i></div><div><div class="stat-val">${tMo}</div><div class="stat-lbl">${T('kpi-mois-imp')}</div></div></div>
+    <div class="stat-card"><div class="stat-ico" style="background:var(--orange-bg)"><i class="fas fa-money-bill-wave" style="color:var(--orange)"></i></div><div><div class="stat-val" style="font-size:16px">${(tDebt/1000).toFixed(1)}k</div><div class="stat-lbl">${T('kpi-dettes2')}</div></div></div>
+    <div class="stat-card" style="opacity:0;pointer-events:none"></div>`;
+
+  if (!results.length) {
+    $('retardList').innerHTML = `<div class="empty-state"><i class="fas fa-check-circle" style="color:var(--green)"></i><h3 style="color:var(--green)">${T('empty-retards')}</h3></div>`;
+    return;
+  }
+  $('retardList').innerHTML = results.map(({ m, lates, debt }) => {
+    const urgency = lates.length >= 6 ? 'var(--red)' : lates.length >= 3 ? 'var(--orange)' : 'var(--yellow)';
+    return `<div class="retard-card" onclick="openAddPayment('${m.id}')">
+      <div class="rc-top">
+        ${memberAvatar(m, 42)}
+        <div class="rc-info">
+          <div class="rc-name">${m.nom} ${m.prenom}</div>
+          <div class="rc-meta">${m.telephone||'—'} · ${catBadge(m.categorie)} · <span class="badge" style="background:${urgency}22;color:${urgency};font-size:9px">${lates.length} ${T('lbl-mois')}</span></div>
+        </div>
+        <span class="rc-debt">${fmtAmount(debt)}</span>
+      </div>
+      <div class="rc-chips">
+        ${lates.slice(0, 6).map(u => `<span class="rc-mo">${Mo(u.mois-1)} ${u.annee}</span>`).join('')}
+        ${lates.length > 6 ? `<span class="rc-mo" style="background:var(--gray-bg);color:var(--gray)">+${lates.length-6}</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ─────────────────────────────────────────────
+   MEMBER CRUD
+───────────────────────────────────────────── */
+function selectCat(el) {
+  // Remove all selected classes
+  document.querySelectorAll('#catSelector .cat-chip').forEach(c => {
+    c.className = 'cat-chip';
+  });
+  const catKey = el.dataset.cat;
+  const selCls = { Sgr: 'selected-sgr', Shb: 'selected-shb', Kbr: 'selected-kbr' }[catKey] || '';
+  el.classList.add(selCls);
+  $('mCat').value = catKey;
+}
+
+function resetCatSelector(val) {
+  document.querySelectorAll('#catSelector .cat-chip').forEach(c => { c.className = 'cat-chip'; });
+  $('mCat').value = '';
+  if (val) {
+    const chip = document.querySelector(`#catSelector .cat-chip[data-cat="${val}"]`);
+    if (chip) selectCat(chip);
+  }
+}
+
+function openAddMember() {
+  $('mId').value = '';
+  $('mNom').value = ''; $('mPrenom').value = ''; $('mTel').value = '';
+  $('mCotisation').value = ''; $('mNotes').value = '';
+  $('mSubType').value = 'monthly'; $('mStatut').value = 'Actif';
+  $('mDateInscription').value = todayStr();
+  resetCatSelector('');
+  ['errMNom','errMPrenom','errMCot','errMDate'].forEach(id => $(id).classList.remove('show'));
+  $('memberModalTitle').textContent = T('memberModalTitle-new');
+  openOv('ovMember');
+  setTimeout(() => $('mNom').focus(), 250);
+}
+
+async function openEditMember(id) {
+  const m = await DB.get('members', id); if (!m) return;
+  $('mId').value = m.id;
+  $('mNom').value = m.nom || ''; $('mPrenom').value = m.prenom || ''; $('mTel').value = m.telephone || '';
+  $('mCotisation').value = m.cotisation || ''; $('mNotes').value = m.notes || '';
+  $('mSubType').value = m.subscription_type || 'monthly'; $('mStatut').value = m.statut || 'Actif';
+  $('mDateInscription').value = m.date_inscription || todayStr();
+  resetCatSelector(m.categorie || '');
+  ['errMNom','errMPrenom','errMCot','errMDate'].forEach(id => $(id).classList.remove('show'));
+  $('memberModalTitle').textContent = T('memberModalTitle-edit');
+  openOv('ovMember');
+}
+
+async function saveMember() {
+  let valid = true;
+  const nom = $('mNom').value.trim();
+  const prenom = $('mPrenom').value.trim();
+  const cot = $('mCotisation').value;
+  const dateInsc = $('mDateInscription').value;
+  if (!nom)     { $('errMNom').classList.add('show'); valid = false; } else $('errMNom').classList.remove('show');
+  if (!prenom)  { $('errMPrenom').classList.add('show'); valid = false; } else $('errMPrenom').classList.remove('show');
+  if (!cot)     { $('errMCot').classList.add('show'); valid = false; } else $('errMCot').classList.remove('show');
+  if (!dateInsc){ $('errMDate').classList.add('show'); valid = false; } else $('errMDate').classList.remove('show');
+  if (!valid) { toast(T('err-required'), 'error'); return; }
+  const id = $('mId').value || uid('M');
+  const existing = await DB.get('members', id) || {};
+  await DB.put('members', {
+    ...existing, id,
+    nom: nom.toUpperCase(), prenom,
+    telephone: $('mTel').value.trim(),
+    categorie: $('mCat').value || '',
+    cotisation: parseFloat(cot) || 0,
+    subscription_type: $('mSubType').value,
+    date_inscription: dateInsc,
+    statut: $('mStatut').value,
+    notes: $('mNotes').value.trim(),
+  });
+  closeOv('ovMember');
+  invalidateCache();
+  toast(T('toast-member-ok'), 'success');
+  await refreshAll();
+}
+
+function confirmDelMember(id) {
+  confirm2(T('confirm-del-m'), T('msg-del-m'), 'danger', async () => {
+    await DB.del('members', id);
+    const pays = await DB.getAll('payments');
+    await Promise.all(pays.filter(p => p.memberId === id).map(p => DB.del('payments', p.id)));
+    invalidateCache();
+    toast(T('toast-deleted'), 'warn');
+    await refreshAll();
+  });
+}
+
+/* ─────────────────────────────────────────────
+   PAYMENT CRUD
+───────────────────────────────────────────── */
+async function openAddPayment(preselect) {
+  const members = (await DB.getAll('members')).filter(m => m.statut === 'Actif')
+    .sort((a, b) => a.nom.localeCompare(b.nom));
+  $('payMember').innerHTML = `<option value="">— ${T('lbl-adherent')} —</option>`
+    + members.map(m => `<option value="${m.id}"${m.id === preselect ? ' selected' : ''}>${m.nom} ${m.prenom}</option>`).join('');
+  $('payDate').value = todayStr();
+  $('payMontant').value = '';
+  $('payWarning').style.display = 'none';
+  $('payMonthsSummary').textContent = '';
+  $('payMonthsGrid').innerHTML = `<p style="color:var(--text4);font-size:12px;grid-column:1/-1;padding:6px">${T('payMonthsPlaceholder')}</p>`;
+
+  if (preselect) {
+    // Sync the <select> visually then load months
+    $('payMember').value = preselect;
+    await onPayMemberChange();
+  }
+  openOv('ovPayment');
+}
+
+async function onPayMemberChange() {
+  const id = $('payMember').value;
+  if (!id) {
+    $('payMonthsGrid').innerHTML = `<p style="color:var(--text4);font-size:12px;grid-column:1/-1;padding:6px">${T('payMonthsPlaceholder')}</p>`;
+    $('payMontant').value = '';
+    return;
+  }
+  const m = await DB.get('members', id);
+  if (!m) return;
+  $('payMontant').value = m.cotisation || '';
+  const unpaid = await getUnpaidForMember(m);
+  const lates  = unpaid.filter(u => u.status === 'late');
+  if (!lates.length) {
+    $('payMonthsGrid').innerHTML = `<div style="grid-column:1/-1;padding:12px;text-align:center;color:var(--green);font-weight:700;font-size:12.5px"><i class="fas fa-check-circle"></i> ${T('pay-tout-ajour')}</div>`;
+    $('payMonthsSummary').textContent = '';
+    return;
+  }
+  $('payMonthsGrid').innerHTML = lates.map(u => `
+    <div class="month-chip" data-mois="${u.mois}" data-annee="${u.annee}" onclick="toggleMonthChip(this)">
+      <div class="mc-mo">${Mo(u.mois - 1)}</div>
+      <div class="mc-yr">${u.annee}</div>
+    </div>`).join('');
+  updatePaySummary();
+}
+
+function toggleMonthChip(el) { el.classList.toggle('selected'); updatePaySummary(); }
+function selectAllMonths()   { document.querySelectorAll('#payMonthsGrid .month-chip').forEach(c => c.classList.add('selected')); updatePaySummary(); }
+function deselectAllMonths() { document.querySelectorAll('#payMonthsGrid .month-chip').forEach(c => c.classList.remove('selected')); updatePaySummary(); }
+
+function updatePaySummary() {
+  const selected = document.querySelectorAll('#payMonthsGrid .month-chip.selected');
+  const montant  = parseFloat($('payMontant').value) || 0;
+  const total    = selected.length * montant;
+  $('payMonthsSummary').textContent = selected.length ? `${selected.length} ${T('lbl-mois')} × ${fmtAmount(montant)} = ${fmtAmount(total)}` : '';
+}
+
+async function savePayment() {
+  const memberId = $('payMember').value;
+  if (!memberId) { toast(T('err-required'), 'error'); return; }
+  const selected = Array.from(document.querySelectorAll('#payMonthsGrid .month-chip.selected'));
+  if (!selected.length) { toast(T('err-no-month'), 'warn'); return; }
+  const montant = parseFloat($('payMontant').value) || 0;
+  if (!montant) { toast(T('err-no-montant'), 'error'); return; }
+  const m = await DB.get('members', memberId);
+  const memberName = m ? `${m.nom} ${m.prenom}` : '';
+  const date_paiement = $('payDate').value || todayStr();
+  const methode = $('payMethode').value;
+  const allPays = await DB.getAll('payments');
+  const dups = [];
+  for (const chip of selected) {
+    const mois = parseInt(chip.dataset.mois), annee = parseInt(chip.dataset.annee);
+    if (allPays.some(p => p.memberId === memberId && p.mois === mois && p.annee === annee)) {
+      dups.push(`${Mo(mois-1)} ${annee}`);
+      continue;
+    }
+    await DB.put('payments', { id: uid('P'), memberId, memberName, mois, annee, montant, date_paiement, methode });
+  }
+  closeOv('ovPayment');
+  invalidateCache();
+  if (dups.length) toast(`${T('err-dup')}: ${dups.join(', ')}`, 'warn');
+  else toast(T('toast-pay-ok'), 'success');
+  await refreshAll();
+}
+
+function confirmDelPayment(id) {
+  confirm2(T('confirm-del-p'), '', 'danger', async () => {
+    await DB.del('payments', id);
+    invalidateCache();
+    toast(T('toast-deleted'), 'warn');
+    await refreshAll();
+  });
+}
+
+/* ─────────────────────────────────────────────
+   EXPORT / IMPORT
+───────────────────────────────────────────── */
+async function doExport() {
+  const data = await DB.exportAll();
+  data._meta = { exportedAt: new Date().toISOString(), version: 2 };
+  const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `${T('export-name')}_${new Date().toISOString().split('T')[0]}.db`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast(T('toast-export-ok'), 'success');
+}
+
+async function doImport(input) {
+  const file = input.files[0]; if (!file) return;
+  $('importFileName').textContent = '⏳ ' + file.name;
+  const mode   = document.querySelector('input[name="importMode"]:checked')?.value || 'replace';
+  const reader = new FileReader();
+  reader.onload = async e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      await DB.importAll(data, mode);
+      invalidateCache();
+      // Reset file input so same file can be re-imported
+      input.value = '';
+      closeOv('ovImport');
+      toast(T('toast-imported'), 'success');
+      await refreshAll();
+    } catch (err) {
+      toast('Erreur: ' + err.message, 'error');
+    }
+  };
+  reader.readAsText(file);
+}
+
+// Import mode radio styling
+document.querySelectorAll('input[name="importMode"]').forEach(radio => {
+  radio.addEventListener('change', () => {
+    document.getElementById('lbl-replace').style.borderColor = 'var(--border)';
+    document.getElementById('lbl-replace').style.background  = 'var(--surface2)';
+    document.getElementById('lbl-merge').style.borderColor   = 'var(--border)';
+    document.getElementById('lbl-merge').style.background    = 'var(--surface2)';
+    const lbl = radio.value === 'replace' ? 'lbl-replace' : 'lbl-merge';
+    document.getElementById(lbl).style.borderColor = 'var(--blue)';
+    document.getElementById(lbl).style.background  = 'var(--blue-bg)';
+  });
+});
+
+/* ─────────────────────────────────────────────
+   CONFIRM WIRING (after DOM ready)
+───────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', async () => {
+  // Wire confirm buttons
+  $('btnConfirmOk').addEventListener('click', () => { closeOv('ovConfirm'); if (_confirmFn) _confirmFn(); });
+  $('btnConfirmCancel').addEventListener('click', () => closeOv('ovConfirm'));
+  $('btn-annuler').addEventListener('click', () => closeOv('ovMember'));
+  $('btn-annuler2').addEventListener('click', () => closeOv('ovPayment'));
+  $('btn-fermer').addEventListener('click', () => closeOv('ovImport'));
+
+  // Date
+  const now = new Date();
+  $('topbarDate').textContent = now.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+
+  // Open DB
+  await DB.open();
+
+  // Build month filter
+  buildMonthFilter();
+
+  // Apply initial translations
+  applyTranslations();
+
+  // Hide loading
+  setTimeout(() => {
+    $('loadScreen').classList.add('hide');
+    setTimeout(() => $('loadScreen')?.remove(), 450);
+  }, 900);
+
+  // Initial render
+  await refreshAll();
+});
+</script>
+</body>
+</html>
